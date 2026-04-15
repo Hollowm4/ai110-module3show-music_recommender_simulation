@@ -22,13 +22,44 @@ Explain your design in plain language.
 Some prompts to answer:
 
 - What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-- What information does your `UserProfile` store
-- How does your `Recommender` compute a score for each song
+
+Audio attributes (continuous 0–1 values):
+
+acoustic — how acoustic vs. electronic it sounds
+valence — how positive/happy the sound feels
+energy, dance, tempo — intensity and rhythmic feel
+
+Categorical tags:
+
+genre (e.g. lofi, pop, jazz)
+mood (e.g. chill, intense, happy)
+
+- What information does your `UserProfile` store?
+
+pref_acoustic and pref_valence — their taste on those two audio scales.
+plays — a dictionary of {song_id: play_count}, which acts as their listening history vector.
+
+- How does your `Recommender` compute a score for each song?
+┌─────────────────────────────────────────────────────┐
+│  1. CONTENT-BASED SCORE                             │
+│     Gaussian proximity on acoustic + valence        │
+│     (peaks at 1.0 if song matches user preference)  │
+│     + 0.12 bonus if song matches user's top mood    │
+│     + 0.12 bonus if song matches user's top genre   │
+│                                                     │
+│  2. COLLABORATIVE SCORE                             │
+│     Cosine similarity between this user's play      │
+│     vector and every other user's play vector       │
+│     → weighted average of how much similar users    │
+│       played each song                              │
+│                                                     │
+│  3. HYBRID BLEND                                    │
+│     final = (content × CB%) + (collab × CF%)        │
+└─────────────────────────────────────────────────────┘
 - How do you choose which songs to recommend
-
-You can include a simple diagram or bullet list if helpful.
-
+![Phase 3: Step 4](image-2.png)
+![Chart](image.png)
+![Flowchart](image-1.png)
 ---
 
 ## Getting Started
@@ -40,7 +71,7 @@ You can include a simple diagram or bullet list if helpful.
    ```bash
    python -m venv .venv
    source .venv/bin/activate      # Mac or Linux
-   .venv\Scripts\activate         # Windows
+   .venv\scripts\activate         # Windows
 
 2. Install dependencies
 
