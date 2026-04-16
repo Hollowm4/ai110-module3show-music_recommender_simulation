@@ -1,15 +1,6 @@
 """
 Command line runner for the Music Recommender Simulation.
-
-This file helps you quickly run and test your recommender.
-
-You will implement the functions in recommender.py:
-- load_songs
-- score_song
-- recommend_songs
 """
-
-
 
 from .recommender import load_songs, recommend_songs
 
@@ -67,12 +58,141 @@ def _print_footer(k):
 def main():
     songs = load_songs("data/songs.csv")
 
+    # ------------------------------------------------------------------
+    # Adversarial test profiles — set ACTIVE_PROFILE to swap in any one.
+    # Set ACTIVE_PROFILE = None to fall through to the real taste profile.
+    # ------------------------------------------------------------------
+    TEST_PROFILES = {
+        "contradiction": {
+            "label":        "The Contradiction - high energy + sad mood",
+            "genre":        "blues",
+            "mood":         "sad",
+            "energy":       0.9,
+            "acousticness": 0.9,
+            "play_history": {},
+        },
+        "ghost": {
+            "label":        "The Ghost - all features disabled",
+            "play_history": {},
+        },
+        "overplayed": {
+            "label":        "The Overplayed Superfan - favourite genre played 50x",
+            "genre":        "lofi",
+            "mood":         "chill",
+            "energy":       0.4,
+            "play_history": {2: 50, 4: 50, 9: 50},
+        },
+        "impossible": {
+            "label":        "The Impossible Target - all features at midpoint 0.5",
+            "energy":       0.5,
+            "acousticness": 0.5,
+            "valence":      0.5,
+            "play_history": {},
+        },
+        "monopoly": {
+            "label":        "The Artist Monopoly - profile matches one artist twice",
+            "genre":        "synthwave",
+            "mood":         "moody",
+            "energy":       0.75,
+            "acousticness": 0.22,
+            "play_history": {},
+        },
+        "niche": {
+            "label":        "The Niche Hunter - only one catalog match",
+            "genre":        "classical",
+            "mood":         "melancholic",
+            "energy":       0.18,
+            "acousticness": 0.97,
+            "play_history": {},
+        },
+    }
+
+    # Change this to any key above to test it, or None for real taste profile
+    ACTIVE_PROFILE = None   # e.g. "contradiction" | "ghost" | "overplayed" etc.
+
+    # ------------------------------------------------------------------
+    # Taste profile — sourced from taste_profile.py
+    # ------------------------------------------------------------------
+    taste_profile = {
+        "acousticness": {
+            "target": 0.50,
+            "sigma":  0.30,         # wider gaussian = more tolerant of variation
+            "label":  "Balanced mix"
+        },
+        "valence": {
+            "target": None,         # no preference — valence scoring disabled
+            "sigma":  None,
+            "label":  "No preference"
+        },
+        "genres": {
+            "preferred": [
+                "pop", "indie pop", "lofi", "ambient", "rock", "metal",
+                "r&b", "hip-hop", "jazz", "blues", "synthwave",
+                "electronic", "country", "folk", "funk", "reggae"
+            ],
+            "bonus": 0.12           # added to score when genre matches
+        },
+        "moods": {
+            "preferred": [],        # no preference — mood scoring disabled
+            "bonus":     0.00
+        },
+        "novelty_boost": {
+            "enabled":               True,
+            "unheard_multiplier":    1.09,
+            "heard_multiplier":      0.85,
+            "overplayed_multiplier": 0.40
+        },
+        "artist_spread": {
+            "enabled":           True,
+            "duplicate_penalty": 0.35
+        }
+    }
+
+    # ------------------------------------------------------------------
+    # Build user_prefs for recommend_songs() from taste_profile values
+    # ------------------------------------------------------------------
     user_prefs = {
-        "genre":        "pop",
-        "mood":         "happy",
-        "energy":       0.8,
+        # Acousticness target + custom sigma from profile
+        "acousticness": taste_profile["acousticness"]["target"],
+
+        # Valence disabled when target is None
+        **({"valence": taste_profile["valence"]["target"]}
+           if taste_profile["valence"]["target"] is not None else {}),
+
+        # First preferred genre as primary genre signal (broad match)
+        "genre": taste_profile["genres"]["preferred"][0]
+                 if taste_profile["genres"]["preferred"] else None,
+
+        # Mood disabled — empty preferred list maps to no mood filter
+        "mood": taste_profile["moods"]["preferred"][0]
+                if taste_profile["moods"]["preferred"] else None,
+
+        # Novelty multipliers passed through for recommend_songs ranking
+        "unheard_multiplier":    taste_profile["novelty_boost"]["unheard_multiplier"],
+        "heard_multiplier":      taste_profile["novelty_boost"]["heard_multiplier"],
+        "overplayed_multiplier": taste_profile["novelty_boost"]["overplayed_multiplier"],
+
+        # Artist spread penalty passed through for ranking
+        "duplicate_penalty": taste_profile["artist_spread"]["duplicate_penalty"],
+
+        # Play history — update this dict with actual listen counts
         "play_history": {1: 8, 5: 3},
     }
+
+    # ------------------------------------------------------------------
+    # Route: swap in test profile if ACTIVE_PROFILE is set
+    # ------------------------------------------------------------------
+    if ACTIVE_PROFILE is not None:
+        if ACTIVE_PROFILE not in TEST_PROFILES:
+            print(f"Unknown profile '{ACTIVE_PROFILE}'. Choose from: {list(TEST_PROFILES)}")
+            return
+        test = TEST_PROFILES[ACTIVE_PROFILE].copy()
+        label = test.pop("label")
+        user_prefs = {k: v for k, v in test.items() if v is not None}
+        print(f"\n  {_BOLD}{_YELLOW}[TEST MODE]{_RESET}  {_DIM}{label}{_RESET}")
+    else:
+        # Remove None-valued keys so score_song skips disabled features
+        user_prefs = {k: v for k, v in user_prefs.items() if v is not None}
 
     k               = 5
     recommendations = recommend_songs(user_prefs, songs, k=k)

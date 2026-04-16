@@ -111,14 +111,13 @@ Use this section to document the experiments you ran. For example:
 
 Summarize some limitations of your recommender.
 
-Examples:
 
-- It only works on a tiny catalog
-- It does not understand lyrics or language
-- It might over favor one genre or mood
-
-You will go deeper on this in your model card.
-
+![Ghost edge case](image-3.png) The Ghost - all features disabled
+![Contradiction edge case](image-4.png) The Contradiction - high energy + sad mood
+![Overplaying edge case](image-5.png) The Overplayed Superfan - favourite genre played 50x
+![Impossible edge case](image-6.png) The Impossible Target - all features at midpoint 0.5
+![Monopoly](image-7.png) The Artist Monopoly - profile matches one artist twice
+![Niche edge case](image-8.png) The Niche Hunter - only one catalog match
 ---
 
 ## Reflection
@@ -237,6 +236,14 @@ Examples:
 A few sentences about what you learned:
 
 - What surprised you about how your system behaved
+
+It's consistent and predictable.
+
 - How did building this change how you think about real music recommenders
+
+I need to get better at math.
+
 - Where do you think human judgment still matters, even if the model seems "smart"
+
+Yes, I had to correct claude a few times. 
 

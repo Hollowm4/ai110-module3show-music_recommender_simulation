@@ -9,12 +9,12 @@ from dataclasses import dataclass
 # Scoring constants (ported from hybrid recommender)
 # ---------------------------------------------------------------------------
 
-GENRE_MATCH_BONUS = 2.0     # flat bonus for exact genre match
+GENRE_MATCH_BONUS = 1.0     # ★ CHANGED: halved from 2.0 — genre is a weaker signal
 MOOD_MATCH_BONUS  = 1.5     # flat bonus for exact mood match
 ENERGY_SIGMA      = 0.22    # Gaussian width for energy proximity
 ACOUSTIC_SIGMA    = 0.22    # Gaussian width for acousticness proximity
 VALENCE_SIGMA     = 0.22    # Gaussian width for valence proximity
-ENERGY_WEIGHT     = 1.0     # max contribution from energy Gaussian
+ENERGY_WEIGHT     = 2.0     # ★ CHANGED: doubled from 1.0 — energy is the primary signal
 ACOUSTIC_WEIGHT   = 0.8     # max contribution from acousticness Gaussian
 VALENCE_WEIGHT    = 0.8     # max contribution from valence Gaussian
 
